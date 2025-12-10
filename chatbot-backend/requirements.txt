@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+langchain
+langchain-openai
+qdrant-client
+psycopg2-binary
+sqlalchemy
+tiktoken
+neon-py
+langchain-community

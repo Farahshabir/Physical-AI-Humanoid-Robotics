@@ -1,0 +1,115 @@
+/* humanoid-robotics-book/src/components/Chatbot/styles.module.css */
+
+.chatContainer {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.chatButton {
+  background-color: var(--ifm-color-primary);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  font-size: 24px;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chatWindow {
+  position: fixed;
+  bottom: 100px;
+  right: 20px;
+  width: 370px;
+  height: 500px;
+  background-color: var(--ifm-background-surface-color);
+  border-radius: 12px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: all 0.3s ease-in-out;
+}
+
+.chatHeader {
+  background-color: var(--ifm-color-primary);
+  color: white;
+  padding: 12px;
+  font-weight: bold;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.messageContainer {
+  flex-grow: 1;
+  padding: 12px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.message {
+  padding: 8px 12px;
+  border-radius: 18px;
+  max-width: 80%;
+  line-height: 1.4;
+}
+
+.userMessage {
+  background-color: var(--ifm-color-primary);
+  color: white;
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+}
+
+.botMessage {
+  background-color: var(--ifm-code-background);
+  color: var(--ifm-font-color-base);
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+}
+
+.chatInputContainer {
+  padding: 12px;
+  border-top: 1px solid var(--ifm-toc-border-color);
+  display: flex;
+  gap: 8px;
+}
+
+.chatInput {
+  flex-grow: 1;
+  padding: 10px;
+  border: 1px solid var(--ifm-toc-border-color);
+  border-radius: 20px;
+  background-color: var(--ifm-background-color);
+  color: var(--ifm-font-color-base);
+}
+
+.sendButton {
+  background-color: var(--ifm-color-primary);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 0 16px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.textSelectionPopup {
+  position: absolute;
+  background-color: var(--ifm-color-primary-dark);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: 1100;
+  font-size: 14px;
+}
