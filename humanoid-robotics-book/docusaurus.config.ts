@@ -46,7 +46,10 @@ const config: Config = {
           editUrl:
             'https://github.com/panaversity/humanoid-robotics-book/tree/main/',
         },
-        blog: {}, // Disabled the blog plugin
+        blog: {
+          path: './blog',
+          routeBasePath: '/blog',
+        },
         theme: {
           customCss: './src/css/custom.css',
         },
