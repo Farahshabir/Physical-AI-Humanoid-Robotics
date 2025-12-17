@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "humanoid-robotics-book/package.json",
+      "use": "@vercel/static-build",
+      "options": {
+        "rootDir": "humanoid-robotics-book"
+      }
+    },
+    {
+      "src": "api/index.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/chat",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/humanoid-robotics-book/$1"
+    }
+  ]
+}

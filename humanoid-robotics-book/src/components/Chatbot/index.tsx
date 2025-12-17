@@ -3,8 +3,8 @@ import { useChatbot } from '@site/src/contexts/ChatbotContext';
 import styles from './styles.module.css';
 import Markdown from 'react-markdown';
 
-// The backend endpoint
-const API_URL = "http://localhost:8000/chat";
+// The backend endpoint - relative path for Vercel
+const API_URL = "/chat";
 
 // Updated message type to match backend data structure
 type Message = {
