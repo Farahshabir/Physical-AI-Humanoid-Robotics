@@ -5,7 +5,7 @@
 .chatWindow {
   border: 1px solid var(--ifm-color-emphasis-300);
   border-radius: var(--ifm-global-radius);
-  background-color: var(--ifm-background-color);
+  background-color: var(--ifm-background-surface-color);
   display: flex;
   flex-direction: column;
   height: 70vh;
@@ -94,11 +94,15 @@
   align-self: flex-start;
 }
 .bot .avatar {
-  background-color: var(--ifm-background-surface-color);
+  background-color: var(--ifm-background-color);
 }
 .bot .messageContent {
-  background-color: var(--ifm-background-surface-color);
+  /* Use a light gray background for bot messages to make them distinct */
+  background-color: var(--ifm-color-emphasis-100);
   border: 1px solid var(--ifm-color-emphasis-300);
+}
+html[data-theme='dark'] .bot .messageContent {
+  background-color: var(--ifm-color-emphasis-200);
 }
 
 .messageActions {
