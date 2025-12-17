@@ -1,12 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useChatbot } from '@site/src/contexts/ChatbotContext';
 import styles from './styles.module.css';
+import Markdown from 'react-markdown';
 
-const API_URL = "http://localhost:8000/chat"; // URL of your FastAPI backend
+// The backend endpoint
+const API_URL = "http://localhost:8000/chat";
 
+// Updated message type to match backend data structure
 type Message = {
+  id: string;
   text: string;
   sender: 'user' | 'bot';
+  sources?: any[];
 };
 
 export default function Chatbot(): JSX.Element {
@@ -25,7 +30,7 @@ export default function Chatbot(): JSX.Element {
     }
   }, [messages]);
 
-  // Handle text selection
+  // Preserve the text selection handler
   useEffect(() => {
     const handleMouseUp = () => {
       const selectedText = window.getSelection()?.toString().trim();
@@ -47,10 +52,13 @@ export default function Chatbot(): JSX.Element {
   }, []);
 
   const handleSendMessage = async (query: string, selectedText: string | null = null) => {
-    if (!query.trim()) return;
+    if (!query.trim() || isLoading) return;
 
-    const userMessage: Message = { text: query, sender: 'user' };
-    setMessages(prev => [...prev, userMessage, {text: "...", sender: 'bot'}]);
+    const userMessage: Message = { id: `user-${Date.now()}`, text: query, sender: 'user' };
+    const assistantId = `bot-${Date.now()}`;
+    const assistantMessage: Message = { id: assistantId, text: '', sender: 'bot', sources: [] };
+
+    setMessages(prev => [...prev, userMessage, assistantMessage]);
     setInput('');
     setIsLoading(true);
 
@@ -58,39 +66,49 @@ export default function Chatbot(): JSX.Element {
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, selected_text: selectedText }),
+        body: JSON.stringify({ query: selectedText ? `${selectedText} - ${query}` : query }),
       });
 
       if (!response.body) throw new Error("No response body");
       
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      let botMessage = '';
-
-      setMessages(prev => prev.slice(0, -1)); // Remove the "..." placeholder
+      let buffer = '';
 
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
         
-        botMessage += decoder.decode(value, { stream: true });
-        setMessages(prev => {
-          const lastMessage = prev[prev.length - 1];
-          if (lastMessage && lastMessage.sender === 'bot') {
-            // Update the last bot message
-            const newMessages = [...prev];
-            newMessages[newMessages.length - 1] = { ...lastMessage, text: botMessage };
-            return newMessages;
-          } else {
-            // Add a new bot message
-            return [...prev, { text: botMessage, sender: 'bot' }];
+        buffer += decoder.decode(value, { stream: true });
+        
+        // Process buffer line by line for Server-Sent Events
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // Keep the last, possibly incomplete line
+
+        for (const line of lines) {
+          if (line.startsWith('data:')) {
+            const data = JSON.parse(line.substring(5));
+            setMessages(prev => prev.map(msg => {
+              if (msg.id === assistantId) {
+                const newMsg = {...msg};
+                if (data.content) {
+                  newMsg.text += data.content;
+                }
+                if (data.sources) {
+                  newMsg.sources = data.sources;
+                }
+                return newMsg;
+              }
+              return msg;
+            }));
           }
-        });
+        }
       }
     } catch (error) {
       console.error("Error fetching chat response:", error);
-      const errorMessage: Message = { text: "Sorry, I'm having trouble connecting. Please check the backend server.", sender: 'bot' };
-      setMessages(prev => [...prev.slice(0, -1), errorMessage]);
+      setMessages(prev => prev.map(msg => 
+        msg.id === assistantId ? { ...msg, text: "Sorry, I'm having trouble connecting. Please ensure the backend server is running and refresh the page." } : msg
+      ));
     } finally {
       setIsLoading(false);
       setSelection(null);
@@ -100,7 +118,7 @@ export default function Chatbot(): JSX.Element {
   const handleSelectionChat = () => {
     if (selection) {
       setIsOpen(true);
-      const query = prompt("What would you like to ask about this text?", "Summarize this for me");
+      const query = prompt("What would you like to ask about this text?", "Explain this in simpler terms");
       if (query) {
         handleSendMessage(query, selection.text);
       }
@@ -110,15 +128,26 @@ export default function Chatbot(): JSX.Element {
   return (
     <>
       <div className={styles.chatContainer}>
-        {isOpen ? (
+        {isOpen && (
           <div className={styles.chatWindow}>
-            <div className={styles.chatHeader}>AI Assistant</div>
+            <div className={styles.chatHeader}>AI Assistant <button className={styles.closeButton} onClick={() => setIsOpen(false)}>✕</button></div>
             <div className={styles.messageContainer} ref={messageContainerRef}>
-              {messages.map((msg, index) => (
-                <div key={index} className={`${styles.message} ${msg.sender === 'user' ? styles.userMessage : styles.botMessage}`}>
-                  {msg.text}
+              {messages.map((msg) => (
+                <div key={msg.id} className={`${styles.message} ${styles[msg.sender]}`}>
+                  <Markdown>{msg.text}</Markdown>
+                  {msg.sources && msg.sources.length > 0 && (
+                    <div className={styles.sourcesContainer}>
+                      <strong>Sources:</strong>
+                      <ul>
+                        {msg.sources.map((source: any, i: number) => (
+                           <li key={i}>{source.url || `Reference ${i+1}`}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               ))}
+              {isLoading && <div className={`${styles.message} ${styles.bot} ${styles.typingIndicator}`}>...</div>}
             </div>
             <div className={styles.chatInputContainer}>
               <input
@@ -126,7 +155,7 @@ export default function Chatbot(): JSX.Element {
                 className={styles.chatInput}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && !isLoading && handleSendMessage(input)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage(input)}
                 placeholder="Ask a question..."
                 disabled={isLoading}
               />
@@ -135,10 +164,10 @@ export default function Chatbot(): JSX.Element {
               </button>
             </div>
           </div>
-        ) : null}
+        )}
       </div>
       
-      {selection && (
+      {selection && !isOpen && (
         <div 
           className={styles.textSelectionPopup} 
           style={{ top: selection.y, left: selection.x }}

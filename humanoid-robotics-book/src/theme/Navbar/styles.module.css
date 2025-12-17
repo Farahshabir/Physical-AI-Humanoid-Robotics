@@ -4,3 +4,23 @@
   align-items: center;
   margin-left: 1rem;
 }
+
+.languageSelectorContainer {
+  display: flex;
+  gap: 0.5rem;
+  margin-right: 1rem;
+}
+
+.languageButton {
+  background-color: var(--ifm-button-background-color);
+  color: var(--ifm-button-color);
+  border: 1px solid var(--ifm-button-border-color);
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--ifm-button-border-radius);
+  cursor: pointer;
+}
+
+.languageButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

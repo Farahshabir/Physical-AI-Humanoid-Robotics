@@ -73,6 +73,7 @@ function NavbarContentLayout({
 
 import AuthButtons from '@site/src/components/Auth/AuthButtons';
 import ChatbotIcon from '@theme/Navbar/ChatbotIcon';
+import LanguageSelector from '../LanguageSelector'; // Import LanguageSelector
 
 export default function NavbarContent(): ReactNode {
   const mobileSidebar = useNavbarMobileSidebar();
@@ -96,6 +97,7 @@ export default function NavbarContent(): ReactNode {
         // TODO stop hardcoding items?
         // Ask the user to add the respective navbar items => more flexible
         <>
+          <LanguageSelector /> {/* Add LanguageSelector here */}
           <NavbarItems items={rightItems} />
           <NavbarColorModeToggle className={styles.colorModeToggle} />
           <AuthButtons />

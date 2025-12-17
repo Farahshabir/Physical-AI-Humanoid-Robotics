@@ -1,0 +1,30 @@
+# Environments
+.env
+.env.*
+!.env.example
+backend/.env
+.venv
+env/
+venv/
+
+# Docusaurus
+/humanoid-robotics-book/build
+/humanoid-robotics-book/.docusaurus
+/humanoid-robotics-book/node_modules
+/humanoid-robotics-book/.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+
+# IDEs
+.vscode/
+.idea/
+
+# OS-specific
+.DS_Store
+Thumbs.db
