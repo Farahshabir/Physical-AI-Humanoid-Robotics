@@ -66,8 +66,8 @@ const config: Config = {
     navbar: {
       title: 'Physical AI & Humanoid Robotics',
       logo: {
-        alt: 'Panaversity Logo',
-        src: 'img/logo.svg',
+        alt: 'AI Robotics Logo',
+        src: 'img/logo-ai.svg',
       },
       items: [
         {

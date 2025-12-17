@@ -1,0 +1,42 @@
+<svg
+  width="100"
+  height="100"
+  viewBox="0 0 100 100"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <style>
+    .robot-head {
+      fill: #a9a9a9;
+      stroke: #333;
+    }
+    .robot-eye {
+      fill: #fff;
+    }
+    .robot-antenna {
+      stroke: #333;
+    }
+    @media (prefers-color-scheme: dark) {
+      .robot-head {
+        fill: #444;
+        stroke: #ccc;
+      }
+      .robot-eye {
+        fill: #3578e5;
+      }
+       .robot-antenna {
+        stroke: #ccc;
+      }
+    }
+  </style>
+  <g>
+    <!-- Head -->
+    <rect class="robot-head" x="15" y="25" width="70" height="60" rx="10" stroke-width="4" />
+    <!-- Eyes -->
+    <circle class="robot-eye" cx="38" cy="50" r="8" />
+    <circle class="robot-eye" cx="62" cy="50" r="8" />
+    <!-- Antenna -->
+    <line class="robot-antenna" x1="50" y1="25" x2="50" y2="10" stroke-width="4" />
+    <circle class="robot-head" cx="50" cy="10" r="5" stroke-width="2" />
+  </g>
+</svg>
