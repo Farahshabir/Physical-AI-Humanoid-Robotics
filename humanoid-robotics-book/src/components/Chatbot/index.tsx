@@ -2,11 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useChatbot } from '@site/src/contexts/ChatbotContext';
 import styles from './styles.module.css';
 import Markdown from 'react-markdown';
+import { Send, User, Bot, RefreshCcw, Paperclip } from 'lucide-react';
 
-// The backend endpoint - relative path for Vercel
-const API_URL = "/chat";
+const API_URL = "/chat"; // Relative path for Vercel
 
-// Updated message type to match backend data structure
 type Message = {
   id: string;
   text: string;
@@ -23,33 +22,33 @@ export default function Chatbot(): JSX.Element {
   const [selection, setSelection] = useState<{ text: string; x: number; y: number } | null>(null);
   const messageContainerRef = useRef<HTMLDivElement>(null);
 
-  // Scroll to bottom of message container when new messages are added
   useEffect(() => {
     if (messageContainerRef.current) {
       messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
     }
   }, [messages]);
 
-  // Preserve the text selection handler
   useEffect(() => {
     const handleMouseUp = () => {
-      const selectedText = window.getSelection()?.toString().trim();
-      if (selectedText && selectedText.length > 10) {
-        const range = window.getSelection().getRangeAt(0);
-        const rect = range.getBoundingClientRect();
-        setSelection({
-          text: selectedText,
-          x: rect.left + window.scrollX,
-          y: rect.bottom + window.scrollY + 5,
-        });
-      } else {
-        setSelection(null);
+      if (!isOpen) { // Only show popup if chat is closed
+        const selectedText = window.getSelection()?.toString().trim();
+        if (selectedText && selectedText.length > 10) {
+          const range = window.getSelection().getRangeAt(0);
+          const rect = range.getBoundingClientRect();
+          setSelection({
+            text: selectedText,
+            x: rect.left + window.scrollX,
+            y: rect.bottom + window.scrollY + 5,
+          });
+        } else {
+          setSelection(null);
+        }
       }
     };
     
     document.addEventListener('mouseup', handleMouseUp);
     return () => document.removeEventListener('mouseup', handleMouseUp);
-  }, []);
+  }, [isOpen]);
 
   const handleSendMessage = async (query: string, selectedText: string | null = null) => {
     if (!query.trim() || isLoading) return;
@@ -66,7 +65,7 @@ export default function Chatbot(): JSX.Element {
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: selectedText ? `${selectedText} - ${query}` : query }),
+        body: JSON.stringify({ query: selectedText ? `Based on the text "${selectedText}", ${query}` : query }),
       });
 
       if (!response.body) throw new Error("No response body");
@@ -80,10 +79,8 @@ export default function Chatbot(): JSX.Element {
         if (done) break;
         
         buffer += decoder.decode(value, { stream: true });
-        
-        // Process buffer line by line for Server-Sent Events
         const lines = buffer.split('\n');
-        buffer = lines.pop() || ''; // Keep the last, possibly incomplete line
+        buffer = lines.pop() || ''; 
 
         for (const line of lines) {
           if (line.startsWith('data:')) {
@@ -91,12 +88,8 @@ export default function Chatbot(): JSX.Element {
             setMessages(prev => prev.map(msg => {
               if (msg.id === assistantId) {
                 const newMsg = {...msg};
-                if (data.content) {
-                  newMsg.text += data.content;
-                }
-                if (data.sources) {
-                  newMsg.sources = data.sources;
-                }
+                if (data.content) newMsg.text += data.content;
+                if (data.sources) newMsg.sources = data.sources;
                 return newMsg;
               }
               return msg;
@@ -125,31 +118,67 @@ export default function Chatbot(): JSX.Element {
     }
   };
 
+  const handleRegenerate = (messageIdToRegenerate: string) => {
+    const lastUserMessage = [...messages].reverse().find(m => m.sender === 'user');
+    if (lastUserMessage) {
+      // Remove the old assistant response
+      setMessages(prev => prev.filter(m => m.id !== messageIdToRegenerate));
+      // Resend the last user query
+      handleSendMessage(lastUserMessage.text);
+    }
+  };
+
   return (
     <>
       <div className={styles.chatContainer}>
         {isOpen && (
           <div className={styles.chatWindow}>
-            <div className={styles.chatHeader}>AI Assistant <button className={styles.closeButton} onClick={() => setIsOpen(false)}>✕</button></div>
+            <div className={styles.chatHeader}>
+              <span>AI Assistant</span>
+              <button className={styles.closeButton} onClick={() => setIsOpen(false)} title="Close Chat">✕</button>
+            </div>
             <div className={styles.messageContainer} ref={messageContainerRef}>
               {messages.map((msg) => (
                 <div key={msg.id} className={`${styles.message} ${styles[msg.sender]}`}>
-                  <Markdown>{msg.text}</Markdown>
-                  {msg.sources && msg.sources.length > 0 && (
-                    <div className={styles.sourcesContainer}>
-                      <strong>Sources:</strong>
-                      <ul>
-                        {msg.sources.map((source: any, i: number) => (
-                           <li key={i}>{source.url || `Reference ${i+1}`}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+                  <div className={styles.avatar}>
+                    {msg.sender === 'user' ? <User size={20} /> : <Bot size={20} />}
+                  </div>
+                  <div className={styles.messageContent}>
+                    <Markdown>{msg.text}</Markdown>
+                    {msg.sender === 'bot' && !isLoading && msg.text && (
+                      <div className={styles.messageActions}>
+                        <button onClick={() => handleRegenerate(msg.id)} title="Regenerate response">
+                          <RefreshCcw size={14}/>
+                        </button>
+                      </div>
+                    )}
+                    {msg.sources && msg.sources.length > 0 && (
+                      <div className={styles.sourcesContainer}>
+                        <strong>Sources:</strong>
+                        <ul>
+                          {msg.sources.map((source: any, i: number) => (
+                            <li key={i}>
+                              <a href={source.url} target="_blank" rel="noopener noreferrer">{source.metadata?.title || source.url || `Reference ${i+1}`}</a>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
-              {isLoading && <div className={`${styles.message} ${styles.bot} ${styles.typingIndicator}`}>...</div>}
+              {isLoading && messages[messages.length - 1]?.sender === 'bot' && (
+                 <div className={`${styles.message} ${styles.bot}`}>
+                    <div className={styles.avatar}><Bot size={20} /></div>
+                    <div className={styles.typingIndicator}><span></span><span></span><span></span></div>
+                 </div>
+              )}
+              <div ref={messageContainerRef} />
             </div>
             <div className={styles.chatInputContainer}>
+               <button className={styles.attachButton} title="Attach file (not implemented)">
+                  <Paperclip size={18}/>
+              </button>
               <input
                 type="text"
                 className={styles.chatInput}
@@ -160,7 +189,7 @@ export default function Chatbot(): JSX.Element {
                 disabled={isLoading}
               />
               <button className={styles.sendButton} onClick={() => handleSendMessage(input)} disabled={isLoading}>
-                Send
+                <Send size={18}/>
               </button>
             </div>
           </div>
